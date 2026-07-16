@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QualidadeSP3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- CONEXÃO PWA (Aplicativo) -->
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+    <!-- FIM CONEXÃO PWA -->
+
+    <style>
+        :root {
+            --primary: #2563EB; 
+            --primary-dark: #1E3A8A; 
+            --success: #10B981; 
+            --danger: #EF4444; 
+            --background: #F8FAFC; 
+            --surface: #FFFFFF;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius-lg: 16px;
+            --radius-md: 10px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--background); color: var(--text-main); -webkit-font-smoothing: antialiased; padding-bottom: 30px; overflow-x: hidden; }
+
+        header { background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%); color: white; padding: 18px 20px; display: flex; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-md); }
+        .menu-btn { font-size: 26px; cursor: pointer; margin-right: 15px; background: none; border: none; color: white; transition: 0.2s; }
+        header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
+        
+        .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: var(--surface); z-index: 200; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--shadow-lg); }
+        .sidebar.active { left: 0; }
+        .sidebar-header { padding: 30px 20px 20px; border-bottom: 1px solid var(--border); font-weight: 700; color: var(--primary-dark); font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-menu-item { padding: 16px 20px; cursor: pointer; display: flex; align-items: center; font-weight: 500; color: var(--text-muted); transition: 0.2s; border-left: 3px solid transparent; }
+        .sidebar-menu-item:hover, .sidebar-menu-item.active { background: #EFF6FF; color: var(--primary); border-left: 3px solid var(--primary); }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(2px); z-index: 150; display: none; }
+        .sidebar-overlay.active { display: block; }
+
+        .container { padding: 20px 15px; max-width: 600px; margin: 0 auto; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+
+        .card { background: var(--surface); padding: 24px; border-radius: var(--radius-lg); margin-bottom: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .card-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .section-title { font-size: 13px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; border-bottom: 2px solid #EFF6FF; padding-bottom: 8px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; position: relative; margin-bottom: 15px; }
+        .form-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase;}
+        
+        input, select, textarea { width: 100%; padding: 14px; border-radius: var(--radius-md); border: 1.5px solid var(--border); background: #F8FAFC; color: var(--text-main); font-size: 15px; font-weight: 600; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: #FFF; outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+        input[readonly] { background: #E2E8F0; color: #64748B; border-style: dashed; }
+        
+        .pill-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .pill-group input[type="radio"] { display: none; }
+        .pill-group label { flex: 1; text-align: center; padding: 14px; border-radius: 12px; border: 2px solid var(--border); background: #F8FAFC; font-weight: 600; font-size: 14px; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .pill-group input[type="radio"]:checked + label { border-color: var(--primary); background: #EFF6FF; color: var(--primary); }
+        .pill-group input[value="Não"]:checked + label.bom, .pill-group input[value="No Padrão"]:checked + label, .pill-group input[value="Feita"]:checked + label { border-color: #10B981; background: #ECFDF5; color: #047857; }
+        .pill-group input[value="Sim"]:checked + label.ruim, .pill-group input[value="Fora do Padrão"]:checked + label, .pill-group input[value="Não Feita"]:checked + label { border-color: #EF4444; background: #FEF2F2; color: #B91C1C; }
+
+        .condicional { display: none; animation: slideDown 0.3s ease; margin-top: -5px; margin-bottom: 15px;}
+        .condicional.ativo { display: block; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .status-badge { text-align: center; padding: 16px; border-radius: var(--radius-md); font-size: 18px; font-weight: 700; border: 2px dashed var(--border); color: var(--text-muted); background: #F8FAFC; transition: 0.3s; margin-top: 5px; }
+        .status-ruim { background: #FEF2F2; border-color: #FECACA; color: #DC2626; }
+        .status-medio { background: #FFFBEB; border-color: #FDE68A; color: #D97706; }
+        .status-bom { background: #F0FDF4; border-color: #BBF7D0; color: #16A34A; }
+        .status-excelente { background: #EFF6FF; border-color: #BFDBFE; color: #2563EB; }
+
+        button.btn { width: 100%; padding: 16px; border: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-transform: uppercase; margin-bottom: 10px; display: flex; justify-content: center; align-items: center; gap: 8px;}
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25); }
+        .btn-success { background: var(--success); color: white; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25); }
+        .btn-danger { background: #FEF2F2; color: var(--danger); border: 1px solid #FECACA; }
+        .btn-whatsapp { background: #25D366; color: white; box-shadow: 0 4px 6px rgba(37, 211, 102, 0.25); }
+        .btn:active { transform: scale(0.98); }
+
+        .search-results-box { position: absolute; width: 100%; max-height: 250px; overflow-y: auto; background: white; border: 1px solid var(--border); border-radius: 12px; z-index: 99; box-shadow: var(--shadow-lg); display: none; margin-top: 5px; padding: 5px; }
+        .search-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #F8FAFC; }
+        .search-item:hover { background: #EFF6FF; }
+        
+        .data-table-container { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
+        th { background: #F8FAFC; color: var(--text-muted); font-weight: 600; text-align: left; padding: 12px 15px; text-transform: uppercase; font-size: 11px; border-bottom: 1px solid var(--border); }
+        td { padding: 14px 15px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:nth-child(even) { background-color: #F8FAFC; }
+        
+        .photo-upload-zone { border: 2px dashed #CBD5E1; padding: 25px; text-align: center; border-radius: 12px; background: #F8FAFC; cursor: pointer; font-weight: 600; color: var(--text-muted); margin-bottom: 15px; }
+        .galeria-fotos { display: flex; gap: 12px; overflow-x: auto; margin-top: 5px; padding-bottom: 5px; }
+        .foto-miniatura { position: relative; width: 85px; height: 85px; flex-shrink: 0; }
+        .foto-miniatura img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
+        .foto-miniatura .btn-remover { position: absolute; top: -6px; right: -6px; background: var(--danger); color: white; border-radius: 50%; width: 22px; height: 22px; text-align: center; font-size: 12px; cursor: pointer; line-height: 22px; font-weight: bold; }
+
+        .kpi-container { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .kpi-box { flex: 1; min-width: 120px; padding: 15px; border-radius: 16px; text-align: left; color: white; box-shadow: var(--shadow-md); }
+        .kpi-title { font-size: 11px; text-transform: uppercase; opacity: 0.9; margin-bottom: 5px; }
+        .kpi-value { font-size: 24px; font-weight: 700; }
+
+        .link-operador { color: var(--primary); font-weight: 600; cursor: pointer; text-decoration: none; }
+        .btn-ico { border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 12px; margin-right: 5px; }
+        .btn-ico-success { background: #D1FAE5; color: #065F46; }
+        .btn-ico-danger { background: #FEE2E2; color: #991B1B; }
+
+        .chart-container { position: relative; height: 32vh; width: 100%; margin-bottom: 15px; background: white; padding: 10px; border-radius: 12px; }
+
+        .chk-export-item { transform: scale(1.4); cursor: pointer; margin-right: 15px; accent-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+        <h1 id="view-title">QualidadeSP3</h1>
+    </header>
+
+    <div class="sidebar-overlay" onclick="fecharSidebar()"></div>
+    <div class="sidebar" id="sidebarMenu">
+        <div class="sidebar-header">
+            <span>🚀 QualidadeSP3</span>
+            <span style="cursor:pointer; font-size:22px; color:var(--text-muted);" onclick="fecharSidebar()">✕</span>
+        </div>
+        <div style="padding: 10px 0;">
+            <div class="sidebar-menu-item active" id="menu-inspecao" onclick="navigateTo('inspecao', '📝 Lançar Inspeção')">📝 Lançar Inspeção</div>
+            <div class="sidebar-menu-item" id="menu-dashboard" onclick="navigateTo('dashboard', '📊 Dashboard Gerencial')">📊 Dashboard Gerencial</div>
+            <div class="sidebar-menu-item" id="menu-operadores" onclick="navigateTo('operadores', '👥 Base de Operadores')">👥 Base de Operadores</div>
+            <div class="sidebar-menu-item" id="menu-maquinas" onclick="navigateTo('maquinas', '🚜 Frota e Equipamentos')">🚜 Base de Máquinas</div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- ============================================== -->
+        <!-- VIEW 1: Lançar Inspeção -->
+        <!-- ============================================== -->
+        <div id="view-inspecao" class="view-section active">
+            <div class="card" style="background: #EFF6FF; border-color: #BFDBFE;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="color: var(--primary-dark);">🔍 Busca de Campo Inteligente</label>
+                    <input type="text" id="omnibox" placeholder="Pesquise por Nome, NP, ID ou Máquina..." oninput="filtrarOmnibox()" style="border-color: #BFDBFE; background: #FFF;">
+                    <div class="search-results-box" id="searchDropdown"></div>
+                </div>
+            </div>
+
+            <div id="form-cadastro" style="display:none;">
+                <div class="card" style="border-top: 4px solid var(--primary);">
+                    <div class="card-title">Auditoria Express <span id="op-np-badge" style="background:#EFF6FF; color:var(--primary); padding:4px 10px; border-radius:20px; font-size:12px;"></span></div>
+                    <div class="form-group"><label>Operador</label><input type="text" id="inp-nome" readonly></div>
+                    <div class="form-group"><label>Máquina / Equipamento</label><select id="inp-maquina"></select></div>
+                    <div class="form-grid">
+                        <div class="form-group" style="margin-bottom:0;"><label>Data</label><input type="date" id="inp-data"></div>
+                        <div class="form-group" style="margin-bottom:0;"><label>Gleba/UP</label><input type="text" id="inp-up" placeholder="Ex: UP59"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">📊 Classificação</div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Nota Gerada (0 a 100)</label>
+                        <input type="number" id="inp-nota" placeholder="Digite a nota final..." oninput="atualizarStatus()">
+                    </div>
+                    <div id="status-display" class="status-badge">Aguardando Avaliação...</div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">🪵 Medições Principais</div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>1ª Tora (cm)</label><input type="text" id="inp-med1" placeholder="Ex: 3.90, 3.85"></div>
+                        <div class="form-group"><label>2ª Tora (cm)</label><input type="text" id="inp-med2" placeholder="Ex: 3.30, 3.25"></div>
+                        <div class="form-group" style="margin-bottom:0;"><label>Aproveit. (cm)</label><input type="text" id="inp-aprov" placeholder="Ex: 2.50, 2.40"></div>
+                        <div class="form-group" style="margin-bottom:0;"><label>Toco (cm)</label><input type="text" id="inp-toco" placeholder="Ex: 10, 12"></div>
+                    </div>
+                    <p style="font-size: 11px; color: var(--text-muted); text-align: center;">💡 Separe as medidas com vírgula ou espaço para apontar várias.</p>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">⚠️ Apontamentos de Qualidade</div>
+                    
+                    <label style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom:6px; display:block;">Casca Agregada?</label>
+                    <div class="pill-group">
+                        <input type="radio" name="casca" id="casca-nao" value="Não" onchange="verificarPills()"><label for="casca-nao" class="bom">Não</label>
+                        <input type="radio" name="casca" id="casca-sim" value="Sim" onchange="verificarPills()"><label for="casca-sim" class="ruim">Sim</label>
+                    </div>
+                    <div class="form-group condicional" id="div-qtd-casca"><input type="number" id="inp-qtd-casca" placeholder="Quantas toras com casca?"></div>
+
+                    <label style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom:6px; display:block;">Padrão de Feixe</label>
+                    <div class="pill-group">
+                        <input type="radio" name="feixe" id="feixe-sim" value="No Padrão" onchange="verificarPills()"><label for="feixe-sim">No Padrão</label>
+                        <input type="radio" name="feixe" id="feixe-nao" value="Fora do Padrão" onchange="verificarPills()"><label for="feixe-nao">Fora do Padrão</label>
+                    </div>
+                    <div class="form-group condicional" id="div-qtd-feixe"><input type="number" id="inp-qtd-feixe" placeholder="Quantos feixes avaliados?"></div>
+
+                    <label style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom:6px; display:block;">Talhadilha</label>
+                    <div class="pill-group">
+                        <input type="radio" name="talhadilha" id="talha-feita" value="Feita" onchange="verificarPills()"><label for="talha-feita">Feita</label>
+                        <input type="radio" name="talhadilha" id="talha-nao" value="Não Feita" onchange="verificarPills()"><label for="talha-nao">Não Feita</label>
+                    </div>
+
+                    <label style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; margin-bottom:6px; display:block;">Ponteira?</label>
+                    <div class="pill-group">
+                        <input type="radio" name="ponteira" id="ponteira-nao" value="Não" onchange="verificarPills()"><label for="ponteira-nao" class="bom">Não</label>
+                        <input type="radio" name="ponteira" id="ponteira-sim" value="Sim" onchange="verificarPills()"><label for="ponteira-sim" class="ruim">Sim</label>
+                    </div>
+                    <div class="form-group condicional" id="div-qtd-ponteira"><input type="number" id="inp-qtd-ponteira" placeholder="Quantas ponteiras?"></div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">📸 Evidências e Observações</div>
+                    <div class="photo-upload-zone" onclick="document.getElementById('file-input').click()">
+                        📸 Clicar para Tirar Foto ou Anexar Imagem
+                        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="processarFoto(event)">
+                    </div>
+                    <div id="galeria-fotos" class="galeria-fotos"></div>
+                    <div class="form-group" style="margin-top:15px; margin-bottom:0;">
+                        <label>Anotação Extra (Opcional)</label>
+                        <textarea id="inp-obs" rows="2" placeholder="Descreva qualquer outra anormalidade aqui..."></textarea>
+                    </div>
+                </div>
+                <button class="btn btn-success" onclick="salvarInspecao()">💾 Gravar Inspeção</button>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEW 2: Dashboard Gerencial                    -->
+        <!-- ============================================== -->
+        <div id="view-dashboard" class="view-section">
+            <div class="kpi-container">
+                <div class="kpi-box" style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);"><div class="kpi-title">Média Geral</div><div class="kpi-value" id="kpi-media">0.0</div></div>
+                <div class="kpi-box" style="background: linear-gradient(135deg, #10B981 0%, #047857 100%);"><div class="kpi-title">Avaliações</div><div class="kpi-value" id="kpi-avaliacoes">0</div></div>
+                <div class="kpi-box" style="background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%);"><div class="kpi-title">Op. Avaliados</div><div class="kpi-value" id="kpi-op-feitos">0</div></div>
+                <div class="kpi-box" style="background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);"><div class="kpi-title">Pendentes</div><div class="kpi-value" id="kpi-op-falta">0</div></div>
+            </div>
+            
+            <div class="card" style="border: 1px solid #A7F3D0; background: #ECFDF5;">
+                <div class="card-title" style="color: #065F46; border-bottom-color:#A7F3D0; margin-bottom: 5px;">📢 Atalho Rápido de Compartilhamento</div>
+                <p style="font-size: 12px; color: #047857; margin-bottom: 15px;">Dica: Para selecionar inspeções individuais, acesse o Histórico do Operador ou da Máquina.</p>
+                <button class="btn btn-whatsapp" onclick="exportarTudoWhatsApp()" style="margin-bottom:0;">📄 Compartilhar Toda a Operação do Mês</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Auditorias Recentes</div>
+                <div class="data-table-container">
+                    <table id="table-logs">
+                        <thead><tr><th>Data/UP</th><th>Operador/Maq</th><th>Nota</th><th>Excluir</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="background: #FEF2F2; border-color: #FECACA;">
+                <div class="card-title" style="color: var(--danger); border-bottom-color:#FECACA;">⚠️ Zona de Perigo</div>
+                <button class="btn btn-danger" style="margin-bottom:0;" onclick="resetarDadosAplicativo()">Resetar Histórico de Avaliações</button>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- VIEWS: Operadores e Máquinas                   -->
+        <!-- ============================================== -->
+        <div id="view-operadores" class="view-section">
+            <div class="card">
+                <div class="card-title">Gestão de Operador</div>
+                <div class="form-group"><label>Nº ID</label><input type="number" id="crud-op-id"></div>
+                <div class="form-group"><label>Nome</label><input type="text" id="crud-op-nome"></div>
+                <div class="form-group"><label>NP</label><input type="text" id="crud-op-np"></div>
+                <div class="form-group"><label>Máquina Base</label><select id="crud-op-maquina"></select></div>
+                <button class="btn btn-primary" onclick="salvarOperadorCRUD()">Salvar</button>
+                <button class="btn" style="background:#9CA3AF; display:none; color:white;" id="btn-cancelar-edit" onclick="limparFormOperador()">Cancelar</button>
+            </div>
+            <div class="card">
+                <div class="card-title">Base de Colaboradores</div>
+                <div class="data-table-container"><table id="table-operadores-crud"><thead><tr><th>Nº</th><th>Nome (Clique p/ Histórico)</th><th>NP</th><th>Ação</th></tr></thead><tbody></tbody></table></div>
+            </div>
+        </div>
+
+        <div id="view-historico-operador" class="view-section">
+            <button class="btn" style="background:#64748B; color:white; width:auto; padding:8px 15px; margin-bottom:15px;" onclick="retornarParaBase('operadores')">⬅ Voltar</button>
+            <div class="card" style="background: linear-gradient(to bottom, #EFF6FF, #FFFFFF);">
+                <div class="card-title" id="page-op-nome" style="font-size:19px; border:none; margin-bottom:0;">Nome do Operador</div>
+                <p style="color:var(--primary); font-weight:600; font-size:13px; margin-bottom:20px;" id="page-op-detalhes">Detalhes</p>
+                <div class="chart-container"><canvas id="graficoEvolucaoOperador"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Auditorias</span>
+                        <button class="btn-ico btn-ico-success" style="font-size: 13px; padding: 10px 15px;" onclick="enviarSelecionados()">📲 Enviar Marcados</button>
+                    </div>
+                    <label style="font-size: 13px; color: var(--primary); font-weight: 600; cursor: pointer;">
+                        <input type="checkbox" id="chk-all-op" style="width:auto; transform:scale(1.3); margin-right:8px;" onchange="toggleAllCheckboxes(this)">Selecionar Todos
+                    </label>
+                </div>
+                <div id="page-op-lista-inspecoes"></div>
+            </div>
+        </div>
+
+        <div id="view-maquinas" class="view-section">
+            <div class="card">
+                <div class="card-title">Nova Máquina</div>
+                <div class="form-group"><label>Prefixo</label><input type="text" id="crud-maq-codigo"></div>
+                <div class="form-group"><label>Identificação</label><input type="text" id="crud-maq-nome"></div>
+                <button class="btn btn-primary" onclick="salvarMaquinaCRUD()">Salvar</button>
+            </div>
+            <div class="card"><div class="card-title">Frota</div><div class="data-table-container"><table id="table-maquinas-crud"><thead><tr><th>Prefixo</th><th>Identificação</th><th>Excluir</th></tr></thead><tbody></tbody></table></div></div>
+        </div>
+
+        <div id="view-historico-maquina" class="view-section">
+            <button class="btn" style="background:#64748B; color:white; width:auto; padding:8px 15px; margin-bottom:15px;" onclick="retornarParaBase('maquinas')">⬅ Voltar</button>
+            <div class="card" style="background: linear-gradient(to bottom, #ECFDF5, #FFFFFF);">
+                <div class="card-title" id="page-maq-nome" style="font-size:19px; border:none; margin-bottom:0;">Máquina</div>
+                <p style="color:var(--success); font-weight:600; font-size:13px; margin-bottom:20px;" id="page-maq-detalhes">Detalhes</p>
+                <div class="chart-container"><canvas id="graficoEvolucaoMaquina"></canvas></div>
+            </div>
+            <div class="card">
+                <div class="card-title" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Auditorias no Equipamento</span>
+                        <button class="btn-ico btn-ico-success" style="font-size: 13px; padding: 10px 15px;" onclick="enviarSelecionados()">📲 Enviar Marcados</button>
+                    </div>
+                    <label style="font-size: 13px; color: var(--success); font-weight: 600; cursor: pointer;">
+                        <input type="checkbox" id="chk-all-maq" style="width:auto; transform:scale(1.3); margin-right:8px;" onchange="toggleAllCheckboxes(this)">Selecionar Todos
+                    </label>
+                </div>
+                <div id="page-maq-lista-inspecoes"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT DE LÓGICA -->
+    <script>
+        const datasetInicialMaquinas = [
+            { codigo: "F-HVE-0336", nome: "ESPERANÇA" }, { codigo: "F-HVE-0470", nome: "PODEROSA" },
+            { codigo: "F-HVE-0473", nome: "SERENA" }, { codigo: "F-HVE-0474", nome: "ZAP" },
+            { codigo: "F-HVE-0475", nome: "ILUMINADA" }, { codigo: "F-HVE-0479", nome: "PATRIOTA" },
+            { codigo: "F-HVE-0604", nome: "PAPALEGUAS" }, { codigo: "F-HVE-0669", nome: "FURACAO" },
+            { codigo: "F-HVE-0670", nome: "RAIO-X" }, { codigo: "F-HVE-0671", nome: "ALIANÇA" },
+            { codigo: "F-HVE-0672", nome: "SERTANEJA" }, { codigo: "F-HVE-0673", nome: "DINAMICA" },
+            { codigo: "F-HVE-0676", nome: "DIPLOMATA" }, { codigo: "F-HVE-0678", nome: "CENTENARIA" },
+            { codigo: "F-HVE-1924", nome: "MAGNATA" }
+        ];
+
+        const datasetInicialOperadores = [
+            {id: 1, nome: "MARCIO JOSE DE SOUZA ARAUJO", np: "255289", maquina: "SERTANEJA"}, {id: 2, nome: "DIRCEU VIEIRA DE CAMARGO", np: "400363", maquina: "ESPERANÇA"},
+            {id: 3, nome: "ARILDO PINHEIRO", np: "400364", maquina: "DIPLOMATA"}, {id: 4, nome: "CLOVIS VIEIRA DE CAMARGO", np: "400480", maquina: "ALIANÇA"},
+            {id: 5, nome: "MARCIO FELICIANO DE OLIVEIRA", np: "402638", maquina: "PENDENTE"}, {id: 6, nome: "DENIS INOCENCIO CARNEIRO", np: "402733", maquina: "ESPERANÇA"},
+            {id: 7, nome: "EDSON COMELI DOS SANTOS", np: "405278", maquina: "PENDENTE"}, {id: 8, nome: "VALMIR VENERANDO", np: "408878", maquina: "PENDENTE"},
+            {id: 9, nome: "RONALDO PEDRO CAMPOS", np: "408982", maquina: "PENDENTE"}, {id: 10, nome: "SAUMIR PELISSOLI MAZON", np: "411260", maquina: "PENDENTE"},
+            {id: 11, nome: "MARCOS ROBERTO FOGAÇA", np: "411278", maquina: "DINAMICA"}, {id: 12, nome: "LUIZ MARCELO BENTO", np: "411464", maquina: "PENDENTE"},
+            {id: 13, nome: "DAVID GENEROSO", np: "411547", maquina: "ILUMINADA"}, {id: 14, nome: "NILCELEI MACIEL DE MELO", np: "411695", maquina: "ILUMINADA"},
+            {id: 15, nome: "ADRIANO PEREIRA BUENO", np: "413728", maquina: "RAIO-X"}, {id: 16, nome: "IZAURO BENEDITO DE MORAES", np: "415203", maquina: "ALIANÇA"},
+            {id: 17, nome: "ANDRE LUIZ BENEDITO", np: "417578", maquina: "FURACAO"}, {id: 18, nome: "EMERSON PINTO DE MELLO", np: "417579", maquina: "PENDENTE"},
+            {id: 19, nome: "PAULO SERGIO CASTILHO CARTILHO", np: "417722", maquina: "PENDENTE"}, {id: 20, nome: "EDSON DOS SANTOS PEREIRA NUNES", np: "419284", maquina: "PENDENTE"},
+            {id: 21, nome: "IRINEU BARBOSA SENKIV", np: "419288", maquina: "MAGNATA"}, {id: 22, nome: "VALTER CORREA DE LIMA", np: "420229", maquina: "PENDENTE"},
+            {id: 23, nome: "BRUNO SILVERIO DE BRITO", np: "420776", maquina: "MAGNATA"}, {id: 24, nome: "BEATRIZ DE FATIMA RAMON", np: "439787", maquina: "PENDENTE"},
+            {id: 25, nome: "ERIK FERREIRA BORTOLETO", np: "420785", maquina: "ZAP"}, {id: 26, nome: "EDSON ARAUJO DOS SANTOS", np: "420841", maquina: "PATRIOTA"},
+            {id: 27, nome: "CLAUDENEI MACIEL DE MELO", np: "420850", maquina: "MAGNATA"}, {id: 28, nome: "SEMI RAFAEL ALVES", np: "420853", maquina: "PENDENTE"},
+            {id: 29, nome: "ANDERSON JOSÉ SCHELA", np: "420855", maquina: "CENTENARIA"}, {id: 30, nome: "FABIO JOSE NUNES", np: "459605", maquina: "PENDENTE"},
+            {id: 31, nome: "SUEMAR PELISSOLI MAZON", np: "420941", maquina: "ZAP"}, {id: 32, nome: "JOSE AUGUSTO VARGEM", np: "420946", maquina: "PENDENTE"},
+            {id: 33, nome: "FERNANDO FRANCISCO ALVES", np: "420954", maquina: "PENDENTE"}, {id: 34, nome: "DOUGLAS ANTONIO TEODORO", np: "420955", maquina: "DIPLOMATA"},
+            {id: 35, nome: "DENILSON APARECIDO PINTO DE MELLO", np: "420956", maquina: "DIPLOMATA"}, {id: 36, nome: "GUILHERME OLIVEIRA GOMES", np: "420976", maquina: "ALIANÇA"},
+            {id: 37, nome: "MILTON BARRETTO", np: "420990", maquina: "PENDENTE"}, {id: 38, nome: "AGNALDO JOSE DE CAMPOS", np: "421000", maquina: "CENTENARIA"},
+            {id: 39, nome: "DIEGO AUGUSTO VALENTIM GENEROSO", np: "421248", maquina: "ALIANÇA"}, {id: 40, nome: "TIAGO MARTINS DE SOUZA", np: "421256", maquina: "PENDENTE"},
+            {id: 42, nome: "SALATIEL PINHEIRO DOS SANTOS", np: "423005", maquina: "ILUMINADA"}, {id: 45, nome: "CELSO AFONSO RIBEIRO", np: "461340", maquina: "DIPLOMATA"},
+            {id: 46, nome: "MARCIO ROBERTO DIAS", np: "423086", maquina: "PATRIOTA"}, {id: 47, nome: "JULIO CESAR DE PAULO", np: "434531", maquina: "PENDENTE"},
+            {id: 48, nome: "SILVIO MARIANO RIBEIRO", np: "435314", maquina: "SERTANEJA"}, {id: 49, nome: "NILTON TAVEIRA DA SILVA", np: "435569", maquina: "PENDENTE"},
+            {id: 50, nome: "LUCIANO DE SOUZA FREITAS", np: "436129", maquina: "ESPERANÇA"}, {id: 51, nome: "JOAO BATISTA FONTINELLE", np: "437167", maquina: "PENDENTE"},
+            {id: 52, nome: "ALEX SANDRO PINTO DA SILVA", np: "439192", maquina: "CENTENARIA"}, {id: 53, nome: "JONATAS PINTO DE OLIVEIRA", np: "420783", maquina: "PENDENTE"},
+            {id: 54, nome: "RENATO PASSARELLI COSTA", np: "439831", maquina: "PENDENTE"}, {id: 55, nome: "TIAGO APARECIDO GENEROSO BORGES", np: "440016", maquina: "PENDENTE"},
+            {id: 56, nome: "WILLIAN COSTA DE OLIVEIRA", np: "441898", maquina: "PENDENTE"}, {id: 57, nome: "ALEX OLIVEIRA SANTOS", np: "442273", maquina: "ZAP"},
+            {id: 58, nome: "LEANDRO MARCELO", np: "442276", maquina: "PENDENTE"}, {id: 59, nome: "STIVEN PABLO DE OLIVEIRA", np: "446090", maquina: "PODEROSA"},
+            {id: 60, nome: "FRANCISCO EDUARDO PINTO", np: "446143", maquina: "PENDENTE"}, {id: 61, nome: "EVERTON COSTA DA SILVA", np: "452537", maquina: "PENDENTE"},
+            {id: 62, nome: "SILVANO DIOGO DE JESUS", np: "452677", maquina: "PENDENTE"}, {id: 63, nome: "MARCIO SILVA DOS SANTOS", np: "452678", maquina: "PENDENTE"},
+            {id: 64, nome: "GEAN DE OLIVEIRA BENEDITO", np: "453136", maquina: "PAPALEGUAS"}, {id: 65, nome: "ERITON ARAUJO DOS SANTOS", np: "453505", maquina: "FURACAO"},
+            {id: 66, nome: "JOÃO GABRIEL BARROS DE OLIVEIRA", np: "454245", maquina: "PAPALEGUAS"}, {id: 67, nome: "VINICIUS APARECIDO BRONZATTI", np: "457760", maquina: "PENDENTE"},
+            {id: 68, nome: "LUCAS EDUARDO FELICIANO PEIXOTO", np: "459212", maquina: "DINAMICA"}, {id: 70, nome: "MATHEUS EDUARDO VALENTIM GENEROSO", np: "459603", maquina: "PENDENTE"}
+        ];
+
+        let baseOperadoresLocal = JSON.parse(localStorage.getItem('qp_operadores_v16')) || datasetInicialOperadores;
+        let baseMaquinasLocal = JSON.parse(localStorage.getItem('qp_maquinas_v16')) || datasetInicialMaquinas;
+        let baseInspecoesLocal = []; 
+
+        if(!localStorage.getItem('qp_operadores_v16')) localStorage.setItem('qp_operadores_v16', JSON.stringify(baseOperadoresLocal));
+        if(!localStorage.getItem('qp_maquinas_v16')) localStorage.setItem('qp_maquinas_v16', JSON.stringify(baseMaquinasLocal));
+
+        let db; let arrayFotosGlobal = []; let operadorSelecionadoId = null; let chartOpInstancia = null; let chartMaqInstancia = null;
+
+        window.onload = function() {
+            atualizarDropdownsDeMaquinas(); renderizarTabelaOperadoresCRUD(); renderizarTabelaMaquinasCRUD();
+            const request = indexedDB.open("QualidadePro_Master_V16", 1);
+            request.onupgradeneeded = e => { e.target.result.createObjectStore("inspecoes", { keyPath: "idAvaliacao" }); };
+            request.onsuccess = e => { db = e.target.result; sincronizarEAtualizarDashboard(); };
+        };
+
+        function sincronizarEAtualizarDashboard() {
+            baseInspecoesLocal = []; let tx = db.transaction(["inspecoes"], "readonly");
+            tx.objectStore("inspecoes").openCursor().onsuccess = e => {
+                let cursor = e.target.result; if(cursor) { baseInspecoesLocal.push(cursor.value); cursor.continue(); } else { renderizarDashboard(); }
+            };
+        }
+
+        function toggleSidebar() { document.getElementById('sidebarMenu').classList.toggle('active'); document.querySelector('.sidebar-overlay').classList.toggle('active'); }
+        function fecharSidebar() { document.getElementById('sidebarMenu').classList.remove('active'); document.querySelector('.sidebar-overlay').classList.remove('active'); }
+        function navigateTo(viewId, titleText) { document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active')); document.querySelectorAll('.sidebar-menu-item').forEach(item => item.classList.remove('active')); let el = document.getElementById('view-' + viewId); if(el) el.classList.add('active'); document.getElementById('view-title').innerText = titleText; let menuEl = document.getElementById('menu-' + viewId); if(menuEl) menuEl.classList.add('active'); fecharSidebar(); if(viewId === 'dashboard') renderizarDashboard(); }
+        function retornarParaBase(tipoBase) { document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active')); document.getElementById('view-' + tipoBase).classList.add('active'); document.getElementById('view-title').innerText = tipoBase === 'operadores' ? 'Gestão de Operadores' : 'Frota e Equipamentos'; }
+
+        function atualizarStatus() { let nota = parseFloat(document.getElementById('inp-nota').value); let badge = document.getElementById('status-display'); badge.className = "status-badge"; if (isNaN(nota)) { badge.innerText = "Aguardando Avaliação..."; return; } if (nota < 90) { badge.innerText = "🔴 RUIM"; badge.classList.add("status-ruim"); } else if (nota >= 90 && nota < 94) { badge.innerText = "🟡 MÉDIO"; badge.classList.add("status-medio"); } else if (nota >= 94 && nota < 98) { badge.innerText = "🟢 BOM"; badge.classList.add("status-bom"); } else if (nota >= 98 && nota <= 100) { badge.innerText = "🔵 EXCELENTE"; badge.classList.add("status-excelente"); } }
+        function verificarPills() { let casca = document.querySelector('input[name="casca"]:checked'); let divCasca = document.getElementById('div-qtd-casca'); if(casca && casca.value === "Sim") divCasca.classList.add('ativo'); else { divCasca.classList.remove('ativo'); document.getElementById('inp-qtd-casca').value = ""; } let feixe = document.querySelector('input[name="feixe"]:checked'); let divFeixe = document.getElementById('div-qtd-feixe'); if(feixe && feixe.value === "Fora do Padrão") divFeixe.classList.add('ativo'); else { divFeixe.classList.remove('ativo'); document.getElementById('inp-qtd-feixe').value = ""; } let ponteira = document.querySelector('input[name="ponteira"]:checked'); let divPonteira = document.getElementById('div-qtd-ponteira'); if(ponteira && ponteira.value === "Sim") divPonteira.classList.add('ativo'); else { divPonteira.classList.remove('ativo'); document.getElementById('inp-qtd-ponteira').value = ""; } }
+        function filtrarOmnibox() { const query = document.getElementById('omnibox').value.toLowerCase().trim(); const dropdown = document.getElementById('searchDropdown'); dropdown.innerHTML = ""; if(!query) { dropdown.style.display = 'none'; return; } const filtrados = baseOperadoresLocal.filter(op => op.id.toString()===query || op.nome.toLowerCase().includes(query) || (op.np && op.np.toString().toLowerCase().includes(query)) || (op.maquina && op.maquina.toLowerCase().includes(query))); if(filtrados.length > 0) { dropdown.style.display = 'block'; filtrados.slice(0, 8).forEach(op => { dropdown.innerHTML += '<div class="search-item" onclick="selecionarOperadorOmnibox(' + op.id + ', \'' + op.nome + '\', \'' + (op.maquina||'') + '\', \'' + (op.np||'') + '\')"><div style="font-weight:600; color:var(--text-main);">Nº ' + op.id + ' - ' + op.nome + '</div><div style="color:var(--text-muted); font-size:11px;">NP: ' + (op.np||'S/N') + ' | 🚜 ' + (op.maquina||'S/M') + '</div></div>'; }); } else { dropdown.style.display = 'none'; } }
+        function limparFormularioDeApontamento() { document.getElementById('inp-nota').value = ""; atualizarStatus(); document.getElementById('inp-med1').value = ""; document.getElementById('inp-med2').value = ""; document.getElementById('inp-aprov').value = ""; document.getElementById('inp-toco').value = ""; document.getElementById('inp-qtd-casca').value = ""; document.getElementById('inp-qtd-feixe').value = ""; document.getElementById('inp-qtd-ponteira').value = ""; document.getElementById('inp-obs').value = ""; document.querySelectorAll('.pill-group input[type="radio"]').forEach(r => r.checked = false); verificarPills(); arrayFotosGlobal = []; renderizarGaleriaFotos(); }
+        function selecionarOperadorOmnibox(id, nome, maquina, np) { operadorSelecionadoId = id; document.getElementById('searchDropdown').style.display = 'none'; document.getElementById('omnibox').value = ""; limparFormularioDeApontamento(); document.getElementById('inp-nome').value = nome; document.getElementById('inp-maquina').value = maquina; document.getElementById('op-np-badge').innerText = 'NP: ' + np; document.getElementById('inp-data').value = new Date().toISOString().split('T')[0]; document.getElementById('form-cadastro').style.display = 'block'; }
+
+        function salvarInspecao() {
+            if(!operadorSelecionadoId) return; const op = baseOperadoresLocal.find(o => o.id === operadorSelecionadoId);
+            let rCasca = document.querySelector('input[name="casca"]:checked'); let rFeixe = document.querySelector('input[name="feixe"]:checked'); let rTalha = document.querySelector('input[name="talhadilha"]:checked'); let rPonteira = document.querySelector('input[name="ponteira"]:checked');
+            const registro = { idAvaliacao: "AV-" + Date.now(), operadorId: operadorSelecionadoId, nome: document.getElementById('inp-nome').value, np: op ? op.np : "", maquina: document.getElementById('inp-maquina').value, data: document.getElementById('inp-data').value, up: document.getElementById('inp-up').value.toUpperCase(), nota: document.getElementById('inp-nota').value, statusNota: document.getElementById('status-display').innerText, med1: document.getElementById('inp-med1').value.trim(), med2: document.getElementById('inp-med2').value.trim(), aprov: document.getElementById('inp-aprov').value.trim(), toco: document.getElementById('inp-toco').value.trim(), casca: rCasca ? rCasca.value : "", cascaQtd: document.getElementById('inp-qtd-casca').value.trim(), feixe: rFeixe ? rFeixe.value : "", feixeQtd: document.getElementById('inp-qtd-feixe').value.trim(), talha: rTalha ? rTalha.value : "", ponteira: rPonteira ? rPonteira.value : "", ponteiraQtd: document.getElementById('inp-qtd-ponteira').value.trim(), obs: document.getElementById('inp-obs').value.trim(), fotos: arrayFotosGlobal };
+            db.transaction(["inspecoes"], "readwrite").objectStore("inspecoes").put(registro).onsuccess = () => { alert("Inspeção salva com sucesso!"); document.getElementById('form-cadastro').style.display = 'none'; operadorSelecionadoId = null; limparFormularioDeApontamento(); sincronizarEAtualizarDashboard(); };
+        }
+
+        function renderizarDashboard() {
+            let logsTable = document.querySelector("#table-logs tbody"); if(!logsTable) return; logsTable.innerHTML = ""; 
+            let totalNotas = 0; let registrosOrdenados = [...baseInspecoesLocal].sort((a, b) => b.idAvaliacao.localeCompare(a.idAvaliacao));
+            registrosOrdenados.forEach(item => { let notaVal = parseFloat(item.nota) || 0; totalNotas += notaVal; let upNome = item.up ? item.up.trim().toUpperCase() : "S/UP"; let dataF = item.data ? item.data.split('-').reverse().join('/') : 'N/A'; logsTable.innerHTML += `<tr><td><span style="font-weight:600;">${dataF}</span><br><span style="color:var(--text-muted);font-size:11px;">${upNome}</span></td><td>${item.nome.split(' ')[0]} <br><span style="color:var(--text-muted);font-size:11px;">🚜 ${item.maquina}</span></td><td><strong style="color:var(--primary); font-size:14px;">${item.nota||'-'}</strong><br><span style="font-size:10px;">${item.statusNota?.replace(/[^\w\s]/gi, '').trim()||''}</span></td><td style="white-space:nowrap;"><button class="btn-ico btn-ico-danger" onclick="excluirInspecao('${item.idAvaliacao}')">✕</button></td></tr>`; });
+
+            let arrayIdsAvaliados = baseInspecoesLocal.map(item => String(item.operadorId));
+            let avaliadosUnicos = [...new Set(arrayIdsAvaliados)].filter(id => id !== "undefined" && id !== "null");
+            let totalOperadoresCadastrados = baseOperadoresLocal.length;
+            let feitos = avaliadosUnicos.length; let faltam = totalOperadoresCadastrados - feitos;
+
+            document.getElementById('kpi-media').innerText = baseInspecoesLocal.length > 0 ? (totalNotas / baseInspecoesLocal.length).toFixed(1) : "0.0";
+            document.getElementById('kpi-avaliacoes').innerText = baseInspecoesLocal.length; document.getElementById('kpi-op-feitos').innerText = feitos; document.getElementById('kpi-op-falta').innerText = faltam > 0 ? faltam : 0;
+        }
+
+        function formatarTextoWhatsApp(av) {
+            let t = `👤 *Operador:* ${av.nome} (NP: ${av.np || 'S/N'})\n🚜 *Equipamento:* ${av.maquina}\n`; let dF = av.data ? av.data.split('-').reverse().join('/') : '-'; t += `📅 *Data:* ${dF} | *UP:* ${av.up || '-'}\n\n`; t += av.nota ? `📊 *Nota Final:* ${av.nota} (${av.statusNota})\n\n` : `📊 *Nota Final:* Não avaliada\n\n`;
+            if(av.med1) t += `🪵 *1ª Tora:* ${av.med1} cm\n`; if(av.med2) t += `🪵 *2ª Tora:* ${av.med2} cm\n`; if(av.aprov) t += `♻️ *Aprov:* ${av.aprov} cm\n`; if(av.toco) t += `📏 *Toco:* ${av.toco} cm\n`;
+            t += `\n⚠️ *Desvios & Apontamentos:*\n`; let apontou = false;
+            if(av.casca) { t += `- Casca Agregada: ${av.casca}`; if(av.casca === 'Sim' && av.cascaQtd) t += ` (${av.cascaQtd} und)`; t += `\n`; apontou = true; }
+            if(av.feixe) { t += `- Padrão de Feixe: ${av.feixe}`; if(av.feixe === 'Fora do Padrão' && av.feixeQtd) t += ` (${av.feixeQtd} und)`; t += `\n`; apontou = true; }
+            if(av.talha) { t += `- Talhadilha: ${av.talha}\n`; apontou = true; }
+            if(av.ponteira) { t += `- Ponteira: ${av.ponteira}`; if(av.ponteira === 'Sim' && av.ponteiraQtd) t += ` (${av.ponteiraQtd} und)`; t += `\n`; apontou = true; }
+            if(av.obs) { t += `- Obs Extra: ${av.obs}\n`; apontou = true; }
+            if(!apontou) t += `✅ Sem registros de anomalias.\n`; return t;
+        }
+
+        function toggleAllCheckboxes(masterCheckbox) { let checkboxes = document.querySelectorAll('.chk-export-item'); checkboxes.forEach(chk => chk.checked = masterCheckbox.checked); }
+        function enviarSelecionados() { let checkboxes = document.querySelectorAll('.chk-export-item:checked'); if(checkboxes.length === 0) { alert("⚠️ Selecione pelo menos 1 relatório marcando a caixinha antes de enviar!"); return; } let idsMarcados = Array.from(checkboxes).map(chk => chk.value); let registros = baseInspecoesLocal.filter(av => idsMarcados.includes(av.idAvaliacao)); let textoCompleto = `*RELATÓRIO GERENCIAL - SELEÇÃO*\nData de Geração: ${new Date().toLocaleDateString('pt-BR')}\n\n`; registros.forEach((av, index) => { textoCompleto += `*--- AUDITORIA ${index + 1} ---*\n`; textoCompleto += formatarTextoWhatsApp(av); textoCompleto += `\n`; }); window.location.href = "https://api.whatsapp.com/send?text=" + encodeURIComponent(textoCompleto); }
+        function exportarTudoWhatsApp() { if(baseInspecoesLocal.length === 0) { alert("Nenhum apontamento feito ainda!"); return; } let textoCompleto = `*RELATÓRIO GERENCIAL - TODA A OPERAÇÃO*\nData: ${new Date().toLocaleDateString('pt-BR')}\n\n`; baseInspecoesLocal.forEach((av, index) => { textoCompleto += `*--- AUDITORIA ${index + 1} ---*\n`; textoCompleto += formatarTextoWhatsApp(av); textoCompleto += `\n`; }); window.location.href = "https://api.whatsapp.com/send?text=" + encodeURIComponent(textoCompleto); }
+        function excluirInspecao(idAvaliacao) { if(confirm("Excluir definitivamente esta avaliação do histórico?")) { db.transaction(["inspecoes"], "readwrite").objectStore("inspecoes").delete(idAvaliacao).onsuccess = () => sincronizarEAtualizarDashboard(); } }
+        function resetarDadosAplicativo() { let seguranca = prompt("⚠️ ATENÇÃO: Apagar todas as avaliações.\nDigite DELETAR para confirmar:"); if(seguranca === "DELETAR") { db.transaction(["inspecoes"], "readwrite").objectStore("inspecoes").clear().onsuccess = () => { alert("Histórico esvaziado!"); sincronizarEAtualizarDashboard(); }; } }
+
+        function atualizarDropdownsDeMaquinas() { [document.getElementById('inp-maquina'), document.getElementById('crud-op-maquina')].forEach(sel => { if(!sel) return; sel.innerHTML = '<option value="PENDENTE">-- PENDENTE --</option>'; baseMaquinasLocal.forEach(m => { sel.innerHTML += `<option value="${m.nome}">${m.nome}</option>`; }); }); }
+        function renderizarTabelaOperadoresCRUD() { let tb = document.querySelector("#table-operadores-crud tbody"); if(!tb) return; tb.innerHTML = ""; [...baseOperadoresLocal].sort((a,b) => a.id - b.id).forEach(op => { tb.innerHTML += `<tr><td><span style="font-weight:600; color:var(--text-muted);">${op.id}</span></td><td><span class="link-operador" onclick="abrirPaginaHistoricoOperador(${op.id})">${op.nome}</span></td><td><span style="background:#F8FAFC; padding:4px 8px; border-radius:6px;">${op.np||'S/N'}</span></td><td><button class="btn-ico" style="background:var(--primary);color:white; margin:0;" onclick="carregarOperadorNoFormCRUD(${op.id})">Editar</button></td></tr>`; }); }
+        function renderizarTabelaMaquinasCRUD() { let tb = document.querySelector("#table-maquinas-crud tbody"); if(!tb) return; tb.innerHTML = ""; [...baseMaquinasLocal].sort((a,b)=>a.nome.localeCompare(b.nome)).forEach(m => { tb.innerHTML += `<tr><td><span style="font-weight:600; color:var(--text-muted);">${m.codigo||'FROTA'}</span></td><td><span class="link-operador" onclick="abrirPaginaHistoricoMaquina('${m.nome}')">${m.nome}</span></td><td><button class="btn-ico btn-ico-danger" style="margin:0;" onclick="deletarMaquinaCRUD('${m.nome}')">✕ Excluir</button></td></tr>`; }); }
+
+        function abrirPaginaHistoricoOperador(idOp) { const op = baseOperadoresLocal.find(o => o.id === idOp); if(!op) return; document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active')); document.getElementById('page-op-nome').innerText = op.nome; document.getElementById('page-op-detalhes').innerText = `Nº Controle: ${op.id} | NP: ${op.np||'S/N'} | Equipamento: ${op.maquina||'N/A'}`; let htmlStr = ""; let lbl = []; let val = []; let chkAll = document.getElementById('chk-all-op'); if(chkAll) chkAll.checked = false; baseInspecoesLocal.forEach(av => { if(av.operadorId === idOp) { let df = av.data ? av.data.split('-').reverse().join('/') : ''; lbl.push(`${df} (${av.up})`); val.push(parseFloat(av.nota)||0); htmlStr += `<div style="border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:12px; display:flex; gap:12px; align-items:flex-start;"><input type="checkbox" class="chk-export-item" value="${av.idAvaliacao}" style="margin-top:5px;"><div style="flex:1;"><p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;"><strong>📅 Data:</strong> ${df} &nbsp;|&nbsp; <strong>🚜 Maq:</strong> ${av.maquina}</p><p style="margin-bottom:4px;"><strong>Nota: <span style="color:var(--primary); font-size:16px;">${av.nota||'-'}</span></strong></p><pre style="font-size:12px; font-family:inherit; color:var(--text-main); white-space:pre-wrap;">${formatarTextoWhatsApp(av).replace(`👤 *Operador:* ${av.nome} (NP: ${av.np || 'S/N'})\n🚜 *Equipamento:* ${av.maquina}\n📅 *Data:* ${df} | *UP:* ${av.up || '-'}\n\n`,'')}</pre></div></div>`; } }); document.getElementById('page-op-lista-inspecoes').innerHTML = htmlStr || "<p style='color:var(--text-muted); padding:10px;'>Nenhuma inspeção ativa.</p>"; if(chartOpInstancia) chartOpInstancia.destroy(); chartOpInstancia = new Chart(document.getElementById('graficoEvolucaoOperador'), { type: 'line', data: { labels: lbl, datasets: [{ label: 'Evolução', data: val, borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } }); document.getElementById('view-historico-operador').classList.add('active'); document.getElementById('view-title').innerText = "Análise Individual"; }
+        function abrirPaginaHistoricoMaquina(nomeMaquina) { const maq = baseMaquinasLocal.find(m => m.nome === nomeMaquina); document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active')); document.getElementById('page-maq-nome').innerText = nomeMaquina; document.getElementById('page-maq-detalhes').innerText = `Prefixo: ${maq ? maq.codigo : 'FROTA'}`; let htmlStr = ""; let lbl = []; let val = []; let chkAll = document.getElementById('chk-all-maq'); if(chkAll) chkAll.checked = false; baseInspecoesLocal.forEach(av => { if(av.maquina === nomeMaquina) { let df = av.data ? av.data.split('-').reverse().join('/') : ''; lbl.push(`${df} (${av.np})`); val.push(parseFloat(av.nota)||0); htmlStr += `<div style="border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:12px; display:flex; gap:12px; align-items:flex-start;"><input type="checkbox" class="chk-export-item" value="${av.idAvaliacao}" style="margin-top:5px;"><div style="flex:1;"><p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;"><strong>📅 Data:</strong> ${df} &nbsp;|&nbsp; <strong>UP:</strong> ${av.up}</p><p style="margin-bottom:4px;"><strong>Op:</strong> ${av.nome} (NP: ${av.np})</p><p style="margin-bottom:4px;"><strong>Nota Lançada: <span style="color:var(--success); font-size:16px;">${av.nota||'-'}</span></strong></p></div></div>`; } }); document.getElementById('page-maq-lista-inspecoes').innerHTML = htmlStr || "<p style='color:var(--text-muted); padding:10px;'>Nenhum lançamento.</p>"; if(chartMaqInstancia) chartMaqInstancia.destroy(); chartMaqInstancia = new Chart(document.getElementById('graficoEvolucaoMaquina'), { type: 'line', data: { labels: lbl, datasets: [{ label: 'Performance', data: val, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } }); document.getElementById('view-historico-maquina').classList.add('active'); document.getElementById('view-title').innerText = "Análise do Equipamento"; }
+        
+        function carregarOperadorNoFormCRUD(id) { const op = baseOperadoresLocal.find(o => o.id === id); if(op) { document.getElementById('crud-op-id').value = op.id; document.getElementById('crud-op-id').setAttribute('readonly', true); document.getElementById('crud-op-nome').value = op.nome; document.getElementById('crud-op-np').value = op.np || ""; document.getElementById('crud-op-maquina').value = op.maquina || "PENDENTE"; document.getElementById('btn-cancelar-edit').style.display = "block"; window.scrollTo({ top: 0, behavior: 'smooth' }); } }
+        function limparFormOperador() { document.getElementById('crud-op-id').value = ""; document.getElementById('crud-op-id').removeAttribute('readonly'); document.getElementById('crud-op-nome').value = ""; document.getElementById('crud-op-np').value = ""; document.getElementById('btn-cancelar-edit').style.display = "none"; }
+        function salvarOperadorCRUD() { const id = parseInt(document.getElementById('crud-op-id').value); const nome = document.getElementById('crud-op-nome').value.toUpperCase(); if(!id || !nome) { alert('Preencha ID e Nome'); return; } const novoOp = { id: id, nome: nome, np: document.getElementById('crud-op-np').value.trim(), maquina: document.getElementById('crud-op-maquina').value }; const index = baseOperadoresLocal.findIndex(o => o.id === id); if(index >= 0) baseOperadoresLocal[index] = novoOp; else baseOperadoresLocal.push(novoOp); localStorage.setItem('qp_operadores_v16', JSON.stringify(baseOperadoresLocal)); limparFormOperador(); renderizarTabelaOperadoresCRUD(); alert('Operador Salvo!'); }
+        function salvarMaquinaCRUD() { const n = document.getElementById('crud-maq-nome').value.toUpperCase().trim(); if(!n) return; const novaMaq = { codigo: document.getElementById('crud-maq-codigo').value.toUpperCase().trim(), nome: n }; const index = baseMaquinasLocal.findIndex(m => m.nome === n); if(index >= 0) baseMaquinasLocal[index] = novaMaq; else baseMaquinasLocal.push(novaMaq); localStorage.setItem('qp_maquinas_v16', JSON.stringify(baseMaquinasLocal)); document.getElementById('crud-maq-codigo').value=""; document.getElementById('crud-maq-nome').value=""; renderizarTabelaMaquinasCRUD(); atualizarDropdownsDeMaquinas(); alert('Equipamento Gravado!'); }
+        function deletarMaquinaCRUD(nome) { if(confirm('Excluir '+nome+'?')) { baseMaquinasLocal = baseMaquinasLocal.filter(m => m.nome !== nome); localStorage.setItem('qp_maquinas_v16', JSON.stringify(baseMaquinasLocal)); renderizarTabelaMaquinasCRUD(); atualizarDropdownsDeMaquinas(); } }
+
+        function processarFoto(event) { const file = event.target.files[0]; if(file) { const reader = new FileReader(); reader.onload = function(e) { const img = new Image(); img.onload = function() { const canvas = document.createElement('canvas'); const scaleSize = 600 / img.width; canvas.width = 600; canvas.height = img.height * scaleSize; canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); arrayFotosGlobal.push(canvas.toDataURL('image/jpeg', 0.5)); renderizarGaleriaFotos(); }; img.src = e.target.result; }; reader.readAsDataURL(file); } }
+        function renderizarGaleriaFotos() { let galeria = document.getElementById('galeria-fotos'); galeria.innerHTML = ""; arrayFotosGlobal.forEach((src, i) => { galeria.innerHTML += `<div class="foto-miniatura"><img src="${src}"><span class="btn-remover" onclick="removerFoto(${i})">✕</span></div>`; }); }
+        function removerFoto(index) { arrayFotosGlobal.splice(index, 1); renderizarGaleriaFotos(); }
+    </script>
+</body>
+</html>
