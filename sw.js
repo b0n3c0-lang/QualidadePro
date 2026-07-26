@@ -1,4 +1,4 @@
-const CACHE_NAME = 'qualidade-sp3-v1.1';
+const CACHE_NAME = 'qualidade-sp3-v1.2';
 const urlsToCache = [
     './',
     './index.html',
