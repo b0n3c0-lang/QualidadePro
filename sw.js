@@ -1,14 +1,26 @@
-const cacheName = 'qualidadesp3-v1';
-const filesToCache = [
-  'index.html',
-  'manifest.json',
-  'icone.png'
+const CACHE_NAME = 'qualidade-sp3-v1.1';
+const urlsToCache = [
+    './',
+    './index.html',
+    './manifest.json',
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+    'https://cdn.jsdelivr.net/npm/chart.js'
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(cacheName).then(cache => cache.addAll(filesToCache)));
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+        .then(cache => {
+            return cache.addAll(urlsToCache);
+        })
+    );
 });
 
-self.addEventListener('fetch', e => {
-  e.respondWith(caches.match(e.request).then(response => response || fetch(e.request)));
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request)
+        .then(response => {
+            return response || fetch(event.request);
+        })
+    );
 });
