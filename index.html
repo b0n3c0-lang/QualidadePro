@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Qualidade SP3</title>
+    <title>Qualidade SP3 Enterprise</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F4C81">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -125,7 +130,6 @@
         .app-footer { text-align: center; padding: 30px 0 10px; font-size: 11px; color: var(--text-muted); opacity: 0.8; }
         .app-footer strong { color: var(--forest); font-weight: 700; }
 
-        /* Estilo das Notificações "Toast" para a IA e Sincronização Automática */
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 13px; font-weight: 600; box-shadow: var(--shadow-md); opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
         #toast.show { visibility: visible; opacity: 1; }
     </style>
@@ -271,10 +275,10 @@
                 </div>
 
                 <div class="card">
-                    <div class="section-title">📸 Evidências (GPS Automático)</div>
+                    <div class="section-title">📸 Evidências Fotográficas</div>
                     <div class="photo-upload-zone" onclick="document.getElementById('file-input').click()">
-                        📍 Clicar para Tirar Foto
-                        <input type="file" id="file-input" accept="image/*" style="display:none" onchange="processarFotoComGPS(event)">
+                        📸 Clicar para Abrir a Câmara
+                        <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none" onchange="processarFotoLeve(event)">
                     </div>
                     <div id="galeria-fotos" class="galeria-fotos"></div>
                     
@@ -442,7 +446,7 @@
         </div>
 
         <div class="app-footer">
-            Qualidade SP3 Enterprise, desenvolvido por <strong>JFTech Soluções em Silvicultura</strong>
+            Qualidade SP3 Enterprise, desenvolvido por <strong>FonTech Soluções Gerenciais</strong>
         </div>
 
     </div>
@@ -665,16 +669,16 @@
             document.getElementById('form-cadastro').style.display = 'block';
         }
 
-        function processarFotoComGPS(event) {
+        // ==========================================
+        // NOVA FUNÇÃO DA CÂMARA (LEVE, SEM GPS)
+        // ==========================================
+        function processarFotoLeve(event) {
             const file = event.target.files[0];
             if(!file) return;
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => lerEComporFoto(file, `GPS: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`), 
-                () => lerEComporFoto(file, "GPS Indisponível"), { timeout: 5000 });
-            } else { lerEComporFoto(file, "GPS não suportado"); }
+            lerEComporFoto(file, "Localização: Campo");
         }
 
-        function lerEComporFoto(file, infoGPS) {
+        function lerEComporFoto(file, infoLocal) {
             const reader = new FileReader();
             reader.onload = e => {
                 const img = new Image();
@@ -685,7 +689,7 @@
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
                     ctx.fillStyle = "#FFFFFF"; ctx.font = "bold 14px Inter, sans-serif";
-                    ctx.fillText(`QualidadeSP3 | ${new Date().toLocaleString('pt-BR')} | ${infoGPS}`, 15, canvas.height - 15);
+                    ctx.fillText(`QualidadeSP3 | ${new Date().toLocaleString('pt-PT')} | ${infoLocal}`, 15, canvas.height - 15);
                     arrayFotosGlobal.push(canvas.toDataURL('image/jpeg', 0.6));
                     renderizarGaleriaFotos();
                 };
@@ -746,17 +750,12 @@
             };
         }
 
-        // =======================================================================================
-        // LÓGICA CORRIGIDA: AGORA NÃO APAGA MAIS! APENAS MARCA COMO "synced = true"
-        // =======================================================================================
         function sincronizarComNuvem(silent = false) {
             let btn = document.getElementById('btn-sync-nuvem');
             let textoOriginal = btn ? btn.innerHTML : "🔄 Sincronizar com o Sheets";
             
             db.transaction(["inspecoes"], "readonly").objectStore("inspecoes").getAll().onsuccess = e => {
                 let dadosLocais = e.target.result;
-                
-                // Filtramos apenas os que AINDA NÃO FORAM para a nuvem
                 let pendentes = dadosLocais.filter(av => !av.synced);
 
                 if(!pendentes || pendentes.length === 0) {
@@ -768,26 +767,12 @@
                 if(silent) mostrarToast("⏳ A enviar dados em segundo plano...");
 
                 let payloadMapeado = pendentes.map(av => ({
-                    "Data": av.data,
-                    "Up": av.up,
-                    "Operador": av.nome,
-                    "NP": av.np,
-                    "Máquina": av.maquina,
-                    "Nota": av.nota,
-                    "Status": av.statusNota,
-                    "Inspetor": av.inspetor,
-                    "1ª Tora": av.med1,
-                    "2ª Tora": av.med2,
-                    "Toco": av.toco,
-                    "Casca": av.casca,
-                    "Qts tora": av.cascaQtd,
-                    "Feixe": av.feixe,
-                    "Qnts Feixe": av.feixeQtd,
-                    "Talhadilha": av.talha,
-                    "Ponteira": av.ponteira,
-                    "Qts ponteira": av.ponteiraQtd,
-                    "Observações": av.obs,
-                    "NºAvaliação": av.idAvaliacao
+                    "Data": av.data, "Up": av.up, "Operador": av.nome, "NP": av.np, "Máquina": av.maquina,
+                    "Nota": av.nota, "Status": av.statusNota, "Inspetor": av.inspetor,
+                    "1ª Tora": av.med1, "2ª Tora": av.med2, "Toco": av.toco,
+                    "Casca": av.casca, "Qts tora": av.cascaQtd, "Feixe": av.feixe, "Qnts Feixe": av.feixeQtd,
+                    "Talhadilha": av.talha, "Ponteira": av.ponteira, "Qts ponteira": av.ponteiraQtd,
+                    "Observações": av.obs, "NºAvaliação": av.idAvaliacao
                 }));
 
                 fetch(APP_SCRIPT_URL, {
@@ -799,7 +784,6 @@
                     if(!silent) alert("🚀 Sucesso! Os dados foram enviados e sincronizados com a Planilha.");
                     else mostrarToast("✅ Dados enviados com sucesso para a Nuvem!");
                     
-                    // Em vez de APAGAR TUDO com clear(), apenas marcamos as que subiram como synced=true
                     let tx = db.transaction(["inspecoes"], "readwrite");
                     let store = tx.objectStore("inspecoes");
                     pendentes.forEach(av => {
@@ -808,7 +792,7 @@
                     });
 
                     tx.oncomplete = () => {
-                        sincronizarEAtualizarDashboard(); // Atualiza a tela com o icone ✅ Nuvem
+                        sincronizarEAtualizarDashboard();
                     };
                 })
                 .catch(err => {
@@ -822,9 +806,6 @@
             };
         }
 
-        // =======================================================================================
-        // PREENCHER DROPDOWNS DO DASHBOARD
-        // =======================================================================================
         function preencherFiltrosDashboard() {
             let selOp = document.getElementById('dash-filtro-op');
             let selMaq = document.getElementById('dash-filtro-maq');
@@ -839,9 +820,6 @@
             selMaq.value = valMaq || "";
         }
 
-        // =======================================================================================
-        // DASHBOARD AGORA LÊ OS FILTROS E MANTÉM OS CHECKBOXES
-        // =======================================================================================
         function renderizarDashboard() {
             let logsTable = document.querySelector("#table-logs tbody"); if(!logsTable) return; logsTable.innerHTML = ""; 
             let totalNotas = 0; 
@@ -849,7 +827,6 @@
             let filtroOp = document.getElementById('dash-filtro-op').value;
             let filtroMaq = document.getElementById('dash-filtro-maq').value;
 
-            // Filtra os dados
             let dadosFiltrados = baseInspecoesLocal;
             if(filtroOp) dadosFiltrados = dadosFiltrados.filter(av => String(av.operadorId) === String(filtroOp));
             if(filtroMaq) dadosFiltrados = dadosFiltrados.filter(av => av.maquina === filtroMaq);
@@ -890,7 +867,7 @@
         function exportarMarcadosDashboard() {
             let chks = document.querySelectorAll('.chk-dash-export:checked');
             if(chks.length === 0){ alert("Selecione pelo menos 1 avaliação na tabela de Últimos Lançamentos!"); return; }
-            let texto = `*QualidadeSP3 - RELATÓRIO DIRECIONADO*\nData: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+            let texto = `*QualidadeSP3 - RELATÓRIO DIRECIONADO*\nData: ${new Date().toLocaleDateString('pt-PT')}\n\n`;
             Array.from(chks).forEach((chk, i) => { 
                 let av = baseInspecoesLocal.find(a => a.idAvaliacao === chk.value);
                 if(av){ texto += `*--- AUDITORIA ${i+1} ---*\n${formatarTextoWhatsApp(av)}\n`; }
@@ -924,7 +901,7 @@
 
         function exportarTudoWhatsApp() {
             if(baseInspecoesLocal.length === 0){ alert("Sem dados!"); return; }
-            let texto = `*QualidadeSP3 - RELATÓRIO GERAL COMPLETO*\nData: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+            let texto = `*QualidadeSP3 - RELATÓRIO GERAL COMPLETO*\nData: ${new Date().toLocaleDateString('pt-PT')}\n\n`;
             baseInspecoesLocal.forEach((av, i) => texto += `*--- AUDITORIA ${i+1} ---*\n${formatarTextoWhatsApp(av)}\n`);
             window.location.href = "https://api.whatsapp.com/send?text=" + encodeURIComponent(texto);
         }
@@ -1020,6 +997,17 @@
             renderizarTabelaMaquinasCRUD(); atualizarDropdownsDeMaquinas(); preencherFiltrosDashboard(); alert('Gravado!');
         }
         function deletarMaquinaCRUD(nome) { if(confirm('Excluir '+nome+'?')) { baseMaquinasLocal = baseMaquinasLocal.filter(m => m.nome !== nome); localStorage.setItem('qp_maquinas_v17', JSON.stringify(baseMaquinasLocal)); renderizarTabelaMaquinasCRUD(); atualizarDropdownsDeMaquinas(); preencherFiltrosDashboard(); } }
+
+        // ==========================================
+        // REGISTO DO SERVICE WORKER (PWA)
+        // ==========================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registado com sucesso!'))
+                .catch(err => console.error('Erro ao registar o Service Worker:', err));
+            });
+        }
     </script>
 </body>
 </html>
