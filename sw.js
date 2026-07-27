@@ -14,6 +14,7 @@ self.addEventListener('install', event => {
             return cache.addAll(urlsToCache);
         })
     );
+    self.skipWaiting(); // Força o app a atualizar imediatamente se houver nova versão
 });
 
 self.addEventListener('fetch', event => {
