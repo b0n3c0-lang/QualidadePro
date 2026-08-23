@@ -377,6 +377,14 @@ Base de Máquinas
 
 </div>
 
+<div class="sidebar-menu-item" id="menu-por-up" onclick="navigateTo('por-up', 'Qualidade por UP')">
+
+<svg class="menu-icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+
+Qualidade por UP
+
+</div>
+
 <div class="sidebar-menu-item" id="menu-configuracoes" onclick="navigateTo('configuracoes', 'Configurações')">
 
 <svg class="menu-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -665,7 +673,7 @@ Gravar Auditoria QualidadeSP3
 
 <div class="kpi-box" style="background: linear-gradient(135deg, #D97706 100%, #B45309 0%);"><div class="kpi-title">Op. Avaliados</div><div class="kpi-value" id="kpi-op-feitos">0</div></div>
 
-<div class="kpi-box" style="background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);"><div class="kpi-title">Pendentes</div><div class="kpi-value" id="kpi-op-falta">0</div></div>
+<div class="kpi-box" style="background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%); cursor:pointer;" onclick="abrirListaPendentes()" title="Toque para ver quem falta avaliar"><div class="kpi-title">Pendentes</div><div class="kpi-value" id="kpi-op-falta">0</div></div>
 
 </div>
 
@@ -725,6 +733,24 @@ Marcar Tudo
 </table>
 
 </div>
+
+</div>
+
+</div>
+
+
+
+<div id="view-pendentes" class="view-section">
+
+<button class="btn" style="background:var(--text-muted); color:white; width:auto; padding:8px 15px; margin-bottom:12px;" onclick="retornarParaBase('dashboard')">⬅ Voltar</button>
+
+<div class="card">
+
+<div class="card-title">Operadores Pendentes de Avaliação</div>
+
+<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Toque em um operador para lançar a inspeção dele agora mesmo.</p>
+
+<div id="lista-pendentes"></div>
 
 </div>
 
@@ -871,6 +897,70 @@ Enviar Marcados
 </div>
 
 
+
+<div id="view-por-up" class="view-section">
+
+<div class="card">
+
+<div class="card-title">Qualidade por UP</div>
+
+<p style="font-size: 11px; color: var(--text-muted); margin-bottom: 15px;">Toque em uma UP para ver quantas auditorias foram feitas e por qual operador.</p>
+
+<div class="data-table-container">
+
+<table id="table-por-up">
+
+<thead><tr><th>UP</th><th>Auditorias</th><th>Média</th><th>Operadores</th></tr></thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<div id="view-detalhe-up" class="view-section">
+
+<button class="btn" style="background:var(--text-muted); color:white; width:auto; padding:8px 15px; margin-bottom:12px;" onclick="retornarParaBase('por-up')">⬅ Voltar</button>
+
+<div class="card" style="background: linear-gradient(to bottom, rgba(15,76,129,0.05), var(--surface));">
+
+<div class="card-title" id="page-up-titulo" style="font-size:17px; border:none; margin-bottom:0;">UP</div>
+
+<p style="color: var(--primary); font-weight:600; font-size:12px; margin-bottom:0;" id="page-up-detalhes">Detalhes</p>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">Por Operador nesta UP</div>
+
+<div class="data-table-container">
+
+<table id="table-detalhe-up">
+
+<thead><tr><th>Operador</th><th>Auditorias</th><th>Média</th></tr></thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-title">Todos os Lançamentos desta UP</div>
+
+<div id="lista-lancamentos-up"></div>
+
+</div>
+
+</div>
 
 <div id="view-configuracoes" class="view-section">
 
@@ -1111,22 +1201,6 @@ let darkMode = localStorage.getItem('qp_dark') === 'true';
 if(darkMode) { document.body.classList.add('dark-mode'); document.getElementById('chk-dark-mode').checked = true; }
 
 atualizarStatusInternet();
-
-}
-
-
-
-// Formata data pra DD/MM/AAAA de forma robusta: funciona tanto com "2026-07-29"
-// quanto com timestamp completo vindo do Sheets ("2026-07-29T03:00:00.000Z")
-function formatarDataBR(dataStr) {
-
-if (!dataStr) return '-';
-
-const m = String(dataStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
-
-if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-
-return String(dataStr);
 
 }
 
@@ -1451,6 +1525,8 @@ fecharSidebar();
 
 if(viewId === 'dashboard') renderizarDashboard();
 
+if(viewId === 'por-up') renderizarQualidadePorUP();
+
 }
 
 
@@ -1460,6 +1536,212 @@ function retornarParaBase(tipoBase) {
 document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
 
 document.getElementById('view-' + tipoBase).classList.add('active');
+
+}
+
+
+
+function abrirListaPendentes() {
+
+document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+
+renderizarListaPendentes();
+
+document.getElementById('view-pendentes').classList.add('active');
+
+}
+
+
+
+function renderizarListaPendentes() {
+
+const avaliadosUnicos = new Set(baseInspecoesLocal.map(item => String(item.operadorId)).filter(id => id !== "undefined" && id !== "null" && id !== ""));
+
+const pendentes = [...baseOperadoresLocal].filter(op => !avaliadosUnicos.has(String(op.id))).sort((a,b) => a.nome.localeCompare(b.nome));
+
+const box = document.getElementById('lista-pendentes');
+
+if(pendentes.length === 0) { box.innerHTML = "<p style='color:var(--text-muted);'>Nenhum operador pendente. Todos já foram avaliados! ✅</p>"; return; }
+
+box.innerHTML = pendentes.map(op => `<div class="search-item" style="margin-bottom:8px; border:1px solid var(--border);" onclick="lancarInspecaoParaPendente(${op.id}, '${op.nome}', '${op.maquina||''}', '${op.np||''}')"><div style="font-weight:600;">${op.nome}</div><div style="color:var(--text-muted); font-size:11px;">NP: ${op.np||'S/N'} | 🚜 ${op.maquina||'PENDENTE'}</div></div>`).join('');
+
+}
+
+
+
+function lancarInspecaoParaPendente(id, nome, maquina, np) {
+
+navigateTo('inspecao', 'Lançar Inspeção');
+
+selecionarOperadorOmnibox(id, nome, maquina, np);
+
+}
+
+
+
+// Agrupa por UP: quantas auditorias, média de nota e quantos operadores distintos passaram por ela
+function renderizarQualidadePorUP() {
+
+const porUP = {};
+
+baseInspecoesLocal.forEach(av => {
+
+const upNome = (av.up || '').trim().toUpperCase() || 'SEM UP';
+
+if(!porUP[upNome]) porUP[upNome] = { registros: [], operadores: new Set() };
+
+porUP[upNome].registros.push(av);
+
+if(av.operadorId !== undefined && av.operadorId !== null && String(av.operadorId) !== 'undefined' && String(av.operadorId) !== 'null') {
+
+porUP[upNome].operadores.add(String(av.operadorId));
+
+}
+
+});
+
+
+
+const tb = document.querySelector('#table-por-up tbody'); if(!tb) return; tb.innerHTML = '';
+
+const upsOrdenadas = Object.keys(porUP).sort((a,b) => a.localeCompare(b));
+
+
+
+if(upsOrdenadas.length === 0) {
+
+tb.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Nenhuma auditoria com UP informada ainda.</td></tr>`;
+
+return;
+
+}
+
+
+
+upsOrdenadas.forEach(upNome => {
+
+const dados = porUP[upNome];
+
+const qtd = dados.registros.length;
+
+const soma = dados.registros.reduce((s,a) => s + (parseFloat(a.nota) || 0), 0);
+
+const media = qtd > 0 ? (soma / qtd).toFixed(1) : '0.0';
+
+const tr = document.createElement('tr');
+
+tr.style.cursor = 'pointer';
+
+tr.onclick = () => abrirDetalheUP(upNome);
+
+tr.innerHTML = `<td><b>${upNome}</b></td><td>${qtd}</td><td>${media}</td><td>${dados.operadores.size}</td>`;
+
+tb.appendChild(tr);
+
+});
+
+}
+
+
+
+function abrirDetalheUP(upNome) {
+
+document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+
+renderizarDetalheUP(upNome);
+
+document.getElementById('view-detalhe-up').classList.add('active');
+
+}
+
+
+
+function renderizarDetalheUP(upNome) {
+
+const registros = baseInspecoesLocal.filter(av => ((av.up || '').trim().toUpperCase() || 'SEM UP') === upNome);
+
+document.getElementById('page-up-titulo').innerText = 'UP ' + upNome;
+
+
+
+const soma = registros.reduce((s,a) => s + (parseFloat(a.nota) || 0), 0);
+
+const media = registros.length > 0 ? (soma / registros.length).toFixed(1) : '0.0';
+
+document.getElementById('page-up-detalhes').innerText = `${registros.length} auditoria(s) lançada(s) | Média geral: ${media}`;
+
+
+
+// Agrupa por operador dentro desta UP (usa operadorId; se faltar, cai no nome pra não sumir da lista)
+const porOperador = {};
+
+registros.forEach(av => {
+
+const temId = av.operadorId !== undefined && av.operadorId !== null && String(av.operadorId) !== 'undefined' && String(av.operadorId) !== 'null';
+
+const chave = temId ? ('id:' + av.operadorId) : ('nome:' + av.nome);
+
+if(!porOperador[chave]) porOperador[chave] = { nome: av.nome || 'Não identificado', registros: [] };
+
+porOperador[chave].registros.push(av);
+
+});
+
+
+
+const tbOp = document.querySelector('#table-detalhe-up tbody'); if(tbOp) tbOp.innerHTML = '';
+
+const linhasOp = Object.values(porOperador).sort((a,b) => a.nome.localeCompare(b.nome));
+
+
+
+if(linhasOp.length === 0) {
+
+if(tbOp) tbOp.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Nenhum registro.</td></tr>`;
+
+} else if(tbOp) {
+
+tbOp.innerHTML = linhasOp.map(op => {
+
+const qtd = op.registros.length;
+
+const somaOp = op.registros.reduce((s,a) => s + (parseFloat(a.nota) || 0), 0);
+
+const medOp = qtd > 0 ? (somaOp / qtd).toFixed(1) : '0.0';
+
+return `<tr><td>${op.nome}</td><td>${qtd}</td><td>${medOp}</td></tr>`;
+
+}).join('');
+
+}
+
+
+
+const lista = document.getElementById('lista-lancamentos-up');
+
+if(!lista) return;
+
+if(registros.length === 0) {
+
+lista.innerHTML = "<p style='color:var(--text-muted);'>Sem lançamentos nesta UP.</p>";
+
+} else {
+
+lista.innerHTML = [...registros].sort((a,b) => (b.idAvaliacao||'').localeCompare(a.idAvaliacao||'')).map(av => {
+
+const df = av.data ? av.data.split('-').reverse().join('/') : '-';
+
+return `<div style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px;">
+
+<p style="font-size:11px; color:var(--text-muted);">📅 ${df} &nbsp;|&nbsp; 🚜 ${av.maquina||'-'}</p>
+
+<p>Op: ${av.nome||'-'} — Nota: <span style="color:var(--forest); font-size:15px; font-weight:700;">${av.nota||'-'}</span></p>
+
+</div>`;
+
+}).join('');
+
+}
 
 }
 
@@ -1725,7 +2007,7 @@ if(silent) mostrarToast("⏳ A sincronizar dados em segundo plano...");
 
 let payloadMapeado = pendentes.map(av => ({
 
-"Data": av.data, "Up": av.up, "Operador": av.nome, "OperadorId": av.operadorId, "NP": av.np, "Máquina": av.maquina,
+"Data": av.data, "Up": av.up, "Operador": av.nome, "NP": av.np, "Máquina": av.maquina,
 
 "Nota": av.nota, "Status": av.statusNota, "Inspetor": av.inspetor,
 
@@ -1735,7 +2017,7 @@ let payloadMapeado = pendentes.map(av => ({
 
 "Talhadilha": av.talha, "Ponteira": av.ponteira, "Qts ponteira": av.ponteiraQtd,
 
-"Observações": av.obs, "NºAvaliação": av.idAvaliacao
+"Observações": av.obs, "NºAvaliação": av.idAvaliacao, "OperadorId": av.operadorId
 
 }));
 
@@ -1810,13 +2092,23 @@ dadosDaNuvem.forEach(row => {
 
 if (row["NºAvaliação"]) {
 
+// Corrige o vínculo com o operador: a planilha nem sempre devolve o OperadorId de volta,
+// então recuperamos usando o NP (ou o nome, como reserva) antes de gravar localmente.
+// Sem isso, o apontamento chega "órfão" e some do histórico do operador e das contagens.
+const npNuvem = row["NP"] || ""; const nomeNuvem = row["Operador"] || "";
+const opResolvido = (row["OperadorId"] && baseOperadoresLocal.find(o => String(o.id) === String(row["OperadorId"])))
+|| (npNuvem && baseOperadoresLocal.find(o => o.np && String(o.np) === String(npNuvem)))
+|| baseOperadoresLocal.find(o => o.nome === nomeNuvem) || null;
+
 store.put({
 
 idAvaliacao: row["NºAvaliação"],
 
+operadorId: opResolvido ? opResolvido.id : null,
+
 data: row["Data"] || "", up: row["Up"] || "",
 
-nome: row["Operador"] || "", operadorId: row["OperadorId"] || null, np: row["NP"] || "", maquina: row["Máquina"] || "",
+nome: row["Operador"] || "", np: row["NP"] || "", maquina: row["Máquina"] || "",
 
 nota: row["Nota"] || "", statusNota: row["Status"] || "",
 
@@ -1942,7 +2234,7 @@ logsTable.innerHTML += `<tr>
 
 <td><input type="checkbox" class="chk-dash-export" value="${item.idAvaliacao}" style="width:16px;height:16px;accent-color:var(--forest);"></td>
 
-<td><span style="font-weight:600;">${formatarDataBR(item.data)}</span><br><span style="color:var(--text-muted);font-size:9px;">UP ${item.up||'-'}</span></td>
+<td><span style="font-weight:600;">${item.data.split('-').reverse().join('/')}</span><br><span style="color:var(--text-muted);font-size:9px;">UP ${item.up||'-'}</span></td>
 
 <td>${item.nome.split(' ')[0]}<br><span style="color:var(--text-muted);font-size:9px;">${item.maquina}</span></td>
 
@@ -1955,12 +2247,7 @@ logsTable.innerHTML += `<tr>
 });
 
 
-let avaliadosUnicos = [...new Set(dadosFiltrados.map(item => {
-    if (item.operadorId !== undefined && item.operadorId !== null && item.operadorId !== '') {
-        return 'id:' + item.operadorId;
-    }
-    return 'ref:' + String(item.nome || '').trim().toUpperCase() + '|' + String(item.np || '').trim();
-}))].filter(chave => chave !== 'ref:|');
+let avaliadosUnicos = [...new Set(dadosFiltrados.map(item => String(item.operadorId)))].filter(id => id !== "undefined");
 
 let totalFalta = baseOperadoresLocal.length - avaliadosUnicos.length;
 
@@ -1982,7 +2269,7 @@ function toggleDashCheckboxes(master) { document.querySelectorAll('.chk-dash-exp
 
 function formatarTextoWhatsApp(av) {
 
-let t = `🌲 *QualidadeSP3 - Auditoria* 🌲\n👤 *Op:* ${av.nome}\n🚜 *Maq:* ${av.maquina}\n📅 *Data:* ${formatarDataBR(av.data)} | UP: ${av.up||'-'}\n📊 *Nota:* ${av.nota} (${av.statusNota})\n🔍 *Inspetor:* ${av.inspetor}\n\n⚠️ *Desvios:*\n`;
+let t = `🌲 *QualidadeSP3 - Auditoria* 🌲\n👤 *Op:* ${av.nome}\n🚜 *Maq:* ${av.maquina}\n📅 *Data:* ${av.data.split('-').reverse().join('/')} | UP: ${av.up||'-'}\n📊 *Nota:* ${av.nota} (${av.statusNota})\n🔍 *Inspetor:* ${av.inspetor}\n\n⚠️ *Desvios:*\n`;
 
 let apontou = false;
 
@@ -2167,7 +2454,7 @@ let htmlStr = ""; let lbl = []; let val = []; document.getElementById('chk-all-o
 
 baseInspecoesLocal.filter(av => av.operadorId === id).forEach(av => {
 
-let df = formatarDataBR(av.data); lbl.push(`${df} (${av.up})`); val.push(parseFloat(av.nota)||0);
+let df = av.data.split('-').reverse().join('/'); lbl.push(`${df} (${av.up})`); val.push(parseFloat(av.nota)||0);
 
 htmlStr += `<div style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px; display:flex; gap:10px; align-items:flex-start;">
 
@@ -2203,7 +2490,7 @@ let htmlStr = ""; let lbl = []; let val = []; document.getElementById('chk-all-m
 
 baseInspecoesLocal.filter(av => av.maquina === nome).forEach(av => {
 
-let df = formatarDataBR(av.data); lbl.push(df); val.push(parseFloat(av.nota)||0);
+let df = av.data.split('-').reverse().join('/'); lbl.push(df); val.push(parseFloat(av.nota)||0);
 
 htmlStr += `<div style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px; display:flex; gap:10px; align-items:flex-start;">
 
