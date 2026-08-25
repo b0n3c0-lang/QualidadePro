@@ -1158,6 +1158,34 @@ if(!localStorage.getItem('qp_maquinas_v17')) localStorage.setItem('qp_maquinas_v
 
 
 
+// Formata qualquer data pra DD/MM/AAAA de forma segura.
+// Por que existe: um apontamento feito no celular sempre guarda a data como "AAAA-MM-DD"
+// (padrão do campo <input type="date">). Mas quando esse mesmo apontamento volta da planilha
+// do Google depois de sincronizar, às vezes chega como "AAAA-MM-DDTHH:mm:ss.sssZ" (data com hora).
+// O código antigo fazia data.split('-').reverse().join('/') pra qualquer um desses casos, o que
+// funciona no primeiro formato mas embaralha completamente o segundo (ex: vira "01T00:00:00.000Z/08/2026").
+// Por isso a data "voltava a bagunçar" especificamente nos apontamentos que já passaram pela nuvem.
+function formatarDataBR(dataStr) {
+if(!dataStr) return '-';
+const s = String(dataStr).trim();
+
+// "AAAA-MM-DD" ou "AAAA-MM-DDTHH:mm:ss..." -> pega só a parte da data, sem depender de fuso horário
+const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+if(isoMatch) return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+
+// já vem como "DD/MM/AAAA" -> mantém, só garante os zeros à esquerda
+const brMatch = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+if(brMatch) return `${brMatch[1].padStart(2,'0')}/${brMatch[2].padStart(2,'0')}/${brMatch[3]}`;
+
+// último recurso: tenta interpretar como data nativa do JS
+const d = new Date(s);
+if(!isNaN(d.getTime())) return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+
+return s; // não travou a tela, mas também não inventou nada
+}
+
+
+
 window.onload = function() {
 
 carregarConfiguracoesSalvas();
@@ -1729,7 +1757,7 @@ lista.innerHTML = "<p style='color:var(--text-muted);'>Sem lançamentos nesta UP
 
 lista.innerHTML = [...registros].sort((a,b) => (b.idAvaliacao||'').localeCompare(a.idAvaliacao||'')).map(av => {
 
-const df = av.data ? av.data.split('-').reverse().join('/') : '-';
+const df = av.data ? formatarDataBR(av.data) : '-';
 
 return `<div style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px;">
 
@@ -2234,7 +2262,7 @@ logsTable.innerHTML += `<tr>
 
 <td><input type="checkbox" class="chk-dash-export" value="${item.idAvaliacao}" style="width:16px;height:16px;accent-color:var(--forest);"></td>
 
-<td><span style="font-weight:600;">${item.data.split('-').reverse().join('/')}</span><br><span style="color:var(--text-muted);font-size:9px;">UP ${item.up||'-'}</span></td>
+<td><span style="font-weight:600;">${formatarDataBR(item.data)}</span><br><span style="color:var(--text-muted);font-size:9px;">UP ${item.up||'-'}</span></td>
 
 <td>${item.nome.split(' ')[0]}<br><span style="color:var(--text-muted);font-size:9px;">${item.maquina}</span></td>
 
@@ -2269,7 +2297,7 @@ function toggleDashCheckboxes(master) { document.querySelectorAll('.chk-dash-exp
 
 function formatarTextoWhatsApp(av) {
 
-let t = `🌲 *QualidadeSP3 - Auditoria* 🌲\n👤 *Op:* ${av.nome}\n🚜 *Maq:* ${av.maquina}\n📅 *Data:* ${av.data.split('-').reverse().join('/')} | UP: ${av.up||'-'}\n📊 *Nota:* ${av.nota} (${av.statusNota})\n🔍 *Inspetor:* ${av.inspetor}\n\n⚠️ *Desvios:*\n`;
+let t = `🌲 *QualidadeSP3 - Auditoria* 🌲\n👤 *Op:* ${av.nome}\n🚜 *Maq:* ${av.maquina}\n📅 *Data:* ${formatarDataBR(av.data)} | UP: ${av.up||'-'}\n📊 *Nota:* ${av.nota} (${av.statusNota})\n🔍 *Inspetor:* ${av.inspetor}\n\n⚠️ *Desvios:*\n`;
 
 let apontou = false;
 
@@ -2454,7 +2482,7 @@ let htmlStr = ""; let lbl = []; let val = []; document.getElementById('chk-all-o
 
 baseInspecoesLocal.filter(av => av.operadorId === id).forEach(av => {
 
-let df = av.data.split('-').reverse().join('/'); lbl.push(`${df} (${av.up})`); val.push(parseFloat(av.nota)||0);
+let df = formatarDataBR(av.data); lbl.push(`${df} (${av.up})`); val.push(parseFloat(av.nota)||0);
 
 htmlStr += `<div style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px; display:flex; gap:10px; align-items:flex-start;">
 
@@ -2490,7 +2518,7 @@ let htmlStr = ""; let lbl = []; let val = []; document.getElementById('chk-all-m
 
 baseInspecoesLocal.filter(av => av.maquina === nome).forEach(av => {
 
-let df = av.data.split('-').reverse().join('/'); lbl.push(df); val.push(parseFloat(av.nota)||0);
+let df = formatarDataBR(av.data); lbl.push(df); val.push(parseFloat(av.nota)||0);
 
 htmlStr += `<div style="border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px; display:flex; gap:10px; align-items:flex-start;">
 
