@@ -2,7 +2,7 @@
 // IMPORTANTE: aumente o número da versão (v1.3 -> v1.4 -> v1.5...) toda vez que
 // publicar uma atualização do app no GitHub. Isso garante que o cache antigo
 // seja descartado e todo mundo (inclusive quem já tinha o app aberto) receba a versão nova.
-const CACHE_NAME = 'qualidade-sp3-v1.6';
+const CACHE_NAME = 'qualidade-sp3-v1.7';
 
 const urlsToCache = [
     './',
